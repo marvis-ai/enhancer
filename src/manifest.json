@@ -1,0 +1,52 @@
+{
+  "manifest_version": 3,
+  "name": "Enhancer AI",
+  "version": "0.1.0",
+  "description": "Enhance the reading experience on news sites with a modern, beautiful UI, and AI-powered insights",
+  "permissions": [
+    "storage"
+  ],
+  "host_permissions": [
+    "https://news.ycombinator.com/*",
+    "https://reddit.com/*"
+  ],
+  "action": {
+    "default_popup": "popup.html",
+    "default_icon": {
+      "16": "icons/icon16.svg",
+      "48": "icons/icon48.svg",
+      "128": "icons/icon128.svg"
+    }
+  },
+  "icons": {
+    "16": "icons/icon16.svg",
+    "48": "icons/icon48.svg",
+    "128": "icons/icon128.svg"
+  },
+  "content_scripts": [
+    {
+      "matches": [
+        "https://news.ycombinator.com/*"
+      ],
+      "js": [
+        "scripts/hn.js"
+      ],
+      "css": [
+        "styles/hn.css"
+      ],
+      "run_at": "document_start"
+    },
+    {
+      "matches": [
+        "https://reddit.com/*"
+      ],
+      "js": [
+        "scripts/reddit.js"
+      ],
+      "css": [
+        "styles/reddit.css"
+      ],
+      "run_at": "document_start"
+    }
+  ]
+}
