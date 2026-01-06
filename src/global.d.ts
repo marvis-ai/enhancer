@@ -1,6 +1,6 @@
 import { Story } from '@/features/hacker-news/types';
 
-declare interface EnhancedSiteProps {
+interface EnhancedSiteProps {
   title: string;
   domain: string;
   className: string;
