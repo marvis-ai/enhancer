@@ -3,6 +3,7 @@ import tailwindcss from '@tailwindcss/vite';
 import react from '@vitejs/plugin-react';
 import { glob } from 'glob';
 import { readFileSync, writeFileSync } from 'fs';
+import path from 'path';
 
 interface AssetInfo {
   name?: string;
@@ -77,6 +78,11 @@ export default defineConfig(async () => {
       tailwindcss(),
       manifestPlugin(),
     ],
+    resolve: {
+      alias: {
+        '@': path.resolve(__dirname, './src'),
+      },
+    },
     build: {
       rollupOptions: {
         input: entries,

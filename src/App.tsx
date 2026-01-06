@@ -1,10 +1,16 @@
+import { AppLogo } from '@/components/AppLogo';
+import { EnableSwitcher } from '@/components/EnableSwitcher';
+
 const App = () => {
   return (
-    <div className='w-[320px] h-[240px] flex items-center justify-center'>
-      <h1 className='text-2xl font-bold text-center text-amber-700'>
-        Hello Hackers
-      </h1>
-    </div>
+    <main className='min-w-sm max-w-md h-auto flex flex-col p-4 py-6 gap-8'>
+      <AppLogo
+        enhanceFor='Hacker News'
+        className='text-orange-500'
+      />
+
+      <EnableSwitcher />
+    </main>
   );
 };
 
