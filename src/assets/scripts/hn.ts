@@ -30,7 +30,10 @@ function scrapeStories(): Story[] {
       const domain = domainElement?.textContent || '';
 
       const metaRow = row.nextElementSibling;
-      if (!metaRow) return;
+      if (!metaRow) {
+        console.warn('Story row missing metadata sibling:', id);
+        return;
+      }
 
       const scoreElement = metaRow.querySelector('.score');
       const points = parseInt(scoreElement?.textContent?.split(' ')[0] || '0');
