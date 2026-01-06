@@ -64,10 +64,9 @@ function mountApp() {
   }
 }
 
-window.addEventListener(
-  'enhancer-ai-data-ready',
-  () => {
-    mountApp();
-  },
-  { once: true },
-);
+// Mount app immediately when DOM is ready
+if (document.readyState === 'loading') {
+  document.addEventListener('DOMContentLoaded', mountApp);
+} else {
+  mountApp();
+}
