@@ -3,9 +3,9 @@ import { createRoot } from 'react-dom/client';
 
 import './styles.css';
 
-import { HNHeader } from '@/ui/hacker-news/Header';
-import { StoryList } from '@/ui/hacker-news/StoryList';
-import type { Story } from '@/ui/hacker-news/types';
+import { HNHeader } from '@/features/hacker-news/Header';
+import { StoryList } from '@/features/hacker-news/StoryList';
+import type { Story } from '@/features/hacker-news/types';
 
 declare global {
   interface Window {

@@ -15,6 +15,6 @@
 
 @layer base {
   body {
-    @apply font-family-serif!;
+    @apply font-family-sans!;
   }
 }

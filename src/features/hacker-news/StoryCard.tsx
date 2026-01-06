@@ -1,6 +1,6 @@
 import { MessageCircle, ArrowUpCircle, Clock, User } from 'lucide-react';
 
-import type { Story } from '@/ui/hacker-news/types';
+import type { Story } from '@/features/hacker-news/types';
 
 interface StoryCardProps {
   story: Story;

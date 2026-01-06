@@ -12,7 +12,7 @@ The HN enhancement uses a two-script approach:
    - Creates a root container for React
    - Dispatches data to the React UI
 
-2. **React UI** (`src/ui/hacker-news/index.tsx`)
+2. **React UI** (`src/features/hacker-news/index.tsx`)
    - Renders the enhanced interface
    - Receives data from content script
    - Built with Vite and injected as IIFE
@@ -28,7 +28,7 @@ The HN enhancement uses a two-script approach:
 
 ## Data Flow
 
-```
+```text
 Original HN Page
     ↓
 Content Script (hn.ts)

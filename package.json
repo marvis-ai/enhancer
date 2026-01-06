@@ -4,7 +4,9 @@
   "version": "0.1.0",
   "type": "module",
   "scripts": {
-    "dev": "tsc -b && vite build && tsx src/lib/scripts/*.ts --watch",
+    "dev": "pnpm run dev:popup & pnpm run dev:content",
+    "dev:popup": "vite build --watch",
+    "dev:content": "tsx src/lib/scripts/*.ts --watch",
     "build": "tsc -b && rm -rf dist && vite build && tsx src/lib/scripts/*.ts",
     "lint": "eslint .",
     "preview": "vite preview"

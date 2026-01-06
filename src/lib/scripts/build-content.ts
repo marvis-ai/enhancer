@@ -67,7 +67,7 @@ async function buildUIScripts() {
       watch: isWatch ? {} : null,
       cssCodeSplit: false,
       lib: {
-        entry: 'src/ui/hacker-news/index.tsx',
+        entry: 'src/features/hacker-news/index.tsx',
         name: 'hn_ui',
         fileName: () => 'hn-ui.js',
         formats: ['iife'],
