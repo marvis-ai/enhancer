@@ -10,13 +10,18 @@ export const EnableSwitcher = () => {
   const [enabled, setEnabled] = useState<boolean>(false);
 
   useEffect(() => {
-    getCurrentTabUrl().then(({ domain: fetchedDomain }) => {
-      setDomain(fetchedDomain);
-      if (fetchedDomain) {
-        const storedValue = localStorage.getItem(fetchedDomain);
-        setEnabled(storedValue === 'true');
-      }
-    });
+    getCurrentTabUrl()
+      .then(({ domain: fetchedDomain }) => {
+        setDomain(fetchedDomain);
+        if (fetchedDomain) {
+          const storedValue = localStorage.getItem(fetchedDomain);
+          setEnabled(storedValue === 'true');
+        }
+      })
+      .catch((error) => {
+        console.error('Failed to get current tab URL:', error);
+        setDomain(null);
+      });
   }, []);
 
   const setEnabledState = (value: boolean) => {

@@ -1,18 +1,7 @@
 // Content script for Hacker News
 // This script hides the original design and scrapes the content
 
-interface Story {
-  id: string;
-  rank: number;
-  title: string;
-  url: string;
-  domain: string;
-  points: number;
-  user: string;
-  time: string;
-  commentsCount: number;
-  commentsUrl: string;
-}
+import type { Story } from '@/features/hacker-news/types';
 
 // Hide the original HN design
 function hideOriginalDesign() {

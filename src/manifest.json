@@ -7,8 +7,7 @@
     "storage"
   ],
   "host_permissions": [
-    "https://news.ycombinator.com/*",
-    "https://reddit.com/*"
+    "https://news.ycombinator.com/*"
   ],
   "action": {
     "default_popup": "popup.html",

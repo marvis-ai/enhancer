@@ -14,7 +14,7 @@ src/
 ├── assets/
 │   └── scripts/
 │       └── hn.ts              # Content script (data scraper)
-├── ui/
+├── features/
 │   └── hacker-news/
 │       ├── index.tsx          # React app entry point
 │       ├── Header.tsx         # Header component

@@ -1,7 +1,6 @@
 import { useEffect, useState } from 'react';
 
-import { Toaster } from 'sonner';
-
+import { Toaster } from '@/components/ui/sonner';
 import { AppLogo } from '@/components/AppLogo';
 import { EnableSwitcher } from '@/components/EnableSwitcher';
 import { AppFooter } from '@/components/AppFooter';
@@ -14,9 +13,14 @@ const App = () => {
   const [siteUrl, setSiteUrl] = useState<string | null>(null);
 
   useEffect(() => {
-    getCurrentTabUrl().then(({ domain }) => {
-      setSiteUrl(domain);
-    });
+    getCurrentTabUrl()
+      .then(({ domain }) => {
+        setSiteUrl(domain);
+      })
+      .catch((error) => {
+        console.error('Failed to get current tab URL:', error);
+        setSiteUrl(null);
+      });
   }, []);
 
   // Derive enhanced site directly from siteUrl
