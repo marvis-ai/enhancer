@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 
 import { Toaster } from '@/components/ui/sonner';
 import { AppLogo } from '@/components/AppLogo';
@@ -10,23 +10,25 @@ import { getCurrentTabUrl } from '@/lib/helpers';
 import { EnhancedSites } from '@/lib/constants';
 
 const App = () => {
-  const [siteUrl, setSiteUrl] = useState<string | null>(null);
+  const [domain, setDomain] = useState<string | null>(null);
 
   useEffect(() => {
     getCurrentTabUrl()
       .then(({ domain }) => {
-        setSiteUrl(domain);
+        setDomain(domain);
       })
       .catch((error) => {
         console.error('Failed to get current tab URL:', error);
-        setSiteUrl(null);
+        setDomain(null);
       });
   }, []);
 
-  // Derive enhanced site directly from siteUrl
-  const enhanced = siteUrl
-    ? EnhancedSites.find((site) => site.domain === siteUrl) || null
-    : null;
+  // Derive enhanced site from siteUrl, useMemo to prevent re-renders
+  const enhanced = useMemo(() => {
+    return domain
+      ? EnhancedSites.find((site) => site.domain === domain) || null
+      : null;
+  }, [domain]);
 
   return (
     <>
@@ -36,7 +38,10 @@ const App = () => {
             enhancedFor={enhanced?.title}
             className={enhanced?.className}
           />
-          <EnableSwitcher />
+          <EnableSwitcher
+            key={domain}
+            domain={domain}
+          />
         </main>
         <AppFooter />
       </div>

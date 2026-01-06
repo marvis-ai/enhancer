@@ -1,28 +1,17 @@
-import { useEffect, useState } from 'react';
+import { useState } from 'react';
 import { toast } from 'sonner';
 
 import { Label } from '@/components/ui/label';
 import { Switch } from '@/components/ui/switch';
-import { getCurrentTabUrl } from '@/lib/helpers';
 
-export const EnableSwitcher = () => {
-  const [domain, setDomain] = useState<string | null>(null);
-  const [enabled, setEnabled] = useState<boolean>(false);
-
-  useEffect(() => {
-    getCurrentTabUrl()
-      .then(({ domain: fetchedDomain }) => {
-        setDomain(fetchedDomain);
-        if (fetchedDomain) {
-          const storedValue = localStorage.getItem(fetchedDomain);
-          setEnabled(storedValue === 'true');
-        }
-      })
-      .catch((error) => {
-        console.error('Failed to get current tab URL:', error);
-        setDomain(null);
-      });
-  }, []);
+export const EnableSwitcher = ({ domain }: { domain: string | null }) => {
+  const getStoredValue = (domain: string | null) => {
+    if (domain) {
+      const storedValue = localStorage.getItem(domain);
+      return storedValue === 'true';
+    }
+    return false;
+  };
 
   const setEnabledState = (value: boolean) => {
     if (!domain) {
@@ -33,6 +22,8 @@ export const EnableSwitcher = () => {
     setEnabled(value);
     localStorage.setItem(domain, value.toString());
   };
+
+  const [enabled, setEnabled] = useState<boolean>(() => getStoredValue(domain));
 
   return (
     <div className='flex flex-col gap-1'>

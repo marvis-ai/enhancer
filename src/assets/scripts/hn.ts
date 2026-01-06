@@ -91,12 +91,10 @@ function init() {
   const stories = scrapeStories();
 
   // Store stories in a global variable for the React app to access
-  interface EnhancerWindow extends Window {
-    __ENHANCER_AI_STORIES__?: typeof stories;
-  }
-  (window as EnhancerWindow).__ENHANCER_AI_STORIES__ = stories;
+  window.__ENHANCER_AI_STORIES__ = stories;
 
   // Dispatch event to notify that data is ready
+  // setTimeout ensures the UI script has attached its event listener
   setTimeout(() => {
     window.dispatchEvent(
       new CustomEvent('enhancer-ai-data-ready', { detail: { stories } }),
