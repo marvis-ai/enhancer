@@ -9,7 +9,7 @@ The Hacker News enhancement uses a **two-script architecture** that separates co
 
 ## File Structure
 
-```
+```text
 src/
 ├── assets/
 │   └── scripts/
@@ -30,7 +30,7 @@ src/
 
 ## Data Flow
 
-```mermaid
+```text
 Hacker News Page (news.ycombinator.com)
     ↓
 Content Script (hn.ts)

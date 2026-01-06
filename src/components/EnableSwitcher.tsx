@@ -1,29 +1,21 @@
-import { useEffect, useState } from 'react';
+import { useState } from 'react';
 
 import { Label } from '@/components/ui/label';
 import { Switch } from '@/components/ui/switch';
+import { toast } from 'sonner';
 
-export const EnableSwitcher = () => {
-  const [siteUrl, setSiteUrl] = useState<string | null>(null);
+type Props = {
+  siteUrl?: string;
+};
+
+export const EnableSwitcher = ({ siteUrl }: Props) => {
   const [enabled, setEnabled] = useState<boolean>(false);
 
-  useEffect(() => {
-    // Get the current active tab's URL
-    chrome.tabs.query(
-      { active: true, currentWindow: true },
-      (tabs: chrome.tabs.Tab[]) => {
-        if (tabs[0]?.url) {
-          const url = new URL(tabs[0].url);
-          const domain = url.hostname;
-          setSiteUrl(domain);
-          setEnabled(localStorage.getItem(domain) === 'true');
-        }
-      },
-    );
-  }, []);
-
   const setEnabledState = (value: boolean) => {
-    if (!siteUrl) return;
+    if (!siteUrl) {
+      toast.info('Please select a site to enable enhancement');
+      return;
+    }
 
     setEnabled(value);
     localStorage.setItem(siteUrl, value.toString());
@@ -39,12 +31,14 @@ export const EnableSwitcher = () => {
           onCheckedChange={setEnabledState}
         />
       </div>
-      <a
-        href='https://news.ycombinator.com'
-        target='_blank'
-        className='text-zinc-400 dark:text-zinc-100 hover:text-zinc-700 transition-colors'>
-        Visit Hacker News →
-      </a>
+      {siteUrl ? (
+        <a
+          href={`https://${siteUrl}`}
+          target='_blank'
+          className='text-zinc-400 dark:text-zinc-100 hover:text-zinc-700 transition-colors'>
+          Visit {siteUrl} →
+        </a>
+      ) : null}
     </div>
   );
 };
