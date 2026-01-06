@@ -5,13 +5,6 @@ import './styles.css';
 
 import { HNHeader } from '@/features/hacker-news/Header';
 import { StoryList } from '@/features/hacker-news/StoryList';
-import type { Story } from '@/features/hacker-news/types';
-
-declare global {
-  interface Window {
-    __ENHANCER_AI_STORIES__?: Story[];
-  }
-}
 
 export const HackerNewsApp = () => {
   const [stories, setStories] = useState<Story[]>(

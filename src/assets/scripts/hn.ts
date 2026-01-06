@@ -1,8 +1,6 @@
 // Content script for Hacker News
 // This script hides the original design and scrapes the content
 
-import type { Story } from '@/features/hacker-news/types';
-
 // Hide the original HN design
 function hideOriginalDesign() {
   const center = document.querySelector('center');

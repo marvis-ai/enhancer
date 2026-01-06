@@ -1,5 +1,4 @@
 import { StoryCard } from '@/features/hacker-news/StoryCard';
-import type { Story } from '@/features/hacker-news/types';
 
 interface StoryListProps {
   stories: Story[];
