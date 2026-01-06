@@ -3,6 +3,7 @@ import tailwindcss from '@tailwindcss/vite';
 import react from '@vitejs/plugin-react';
 import { glob } from 'glob';
 import { readFileSync, writeFileSync } from 'fs';
+import path from 'path';
 
 interface AssetInfo {
   name?: string;
@@ -19,6 +20,7 @@ interface ContentScript {
 function manifestPlugin() {
   return {
     name: 'manifest-plugin',
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     writeBundle(_options: unknown, bundle: Record<string, any>) {
       const manifest = JSON.parse(readFileSync('src/manifest.json', 'utf-8'));
 
@@ -42,7 +44,9 @@ function manifestPlugin() {
       // Update manifest with hashed filenames
       manifest.content_scripts.forEach((script: ContentScript) => {
         script.js = script.js.map((file: string) => fileMap[file] || file);
-        script.css = script.css.map((file: string) => fileMap[file] || file);
+        if (script.css) {
+          script.css = script.css.map((file: string) => fileMap[file] || file);
+        }
       });
 
       // Write processed manifest to dist
@@ -56,13 +60,6 @@ export default defineConfig(async () => {
   const entries: Record<string, string> = {
     popup: 'popup.html',
   };
-
-  // Add all TypeScript files from src/assets/scripts
-  const scriptFiles = await glob('src/assets/scripts/**/*.ts');
-  scriptFiles.forEach((file: string) => {
-    const name = file.replace('src/assets/', '').replace('.ts', '');
-    entries[name] = file;
-  });
 
   // Add all CSS files from src/assets/styles
   const styleFiles = await glob('src/assets/styles/**/*.css');
@@ -81,6 +78,11 @@ export default defineConfig(async () => {
       tailwindcss(),
       manifestPlugin(),
     ],
+    resolve: {
+      alias: {
+        '@': path.resolve(__dirname, './src'),
+      },
+    },
     build: {
       rollupOptions: {
         input: entries,
@@ -96,5 +98,6 @@ export default defineConfig(async () => {
         },
       },
     },
-  };
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  } as any;
 });

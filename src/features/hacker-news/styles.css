@@ -1,0 +1,22 @@
+/* Self-hosted fonts via @fontsource - no external CDN requests */
+@import '@fontsource/open-sans/400.css';
+@import '@fontsource/open-sans/500.css';
+@import '@fontsource/open-sans/600.css';
+@import '@fontsource/open-sans/700.css';
+@import '@fontsource/newsreader/400.css';
+@import '@fontsource/newsreader/500.css';
+@import '@fontsource/newsreader/600.css';
+@import '@fontsource/newsreader/700.css';
+
+@import 'tailwindcss';
+
+@theme {
+  --font-family-sans: 'Open Sans', -apple-system, BlinkMacSystemFont, sans-serif;
+  --font-family-serif: 'Newsreader', serif;
+}
+
+@layer base {
+  body {
+    @apply font-sans!;
+  }
+}

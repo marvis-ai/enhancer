@@ -7,8 +7,7 @@
     "storage"
   ],
   "host_permissions": [
-    "https://news.ycombinator.com/*",
-    "https://reddit.com/*"
+    "https://news.ycombinator.com/*"
   ],
   "action": {
     "default_popup": "popup.html",
@@ -29,22 +28,11 @@
         "https://news.ycombinator.com/*"
       ],
       "js": [
-        "scripts/hn.js"
+        "assets/hn.js",
+        "assets/hn-ui.js"
       ],
       "css": [
-        "styles/hn.css"
-      ],
-      "run_at": "document_start"
-    },
-    {
-      "matches": [
-        "https://reddit.com/*"
-      ],
-      "js": [
-        "scripts/reddit.js"
-      ],
-      "css": [
-        "styles/reddit.css"
+        "assets/hn-ui.css"
       ],
       "run_at": "document_start"
     }
