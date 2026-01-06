@@ -82,8 +82,10 @@ function init() {
   // Hide original design
   hideOriginalDesign();
 
-  // Add id to body tag for React to mount
-  document.body.id = 'enhancer-ai-root';
+  // Create dedicated mount element for React
+  const mount = document.createElement('div');
+  mount.id = 'enhancer-ai-root';
+  document.body.appendChild(mount);
 
   // Scrape stories and store them
   const stories = scrapeStories();
@@ -94,7 +96,7 @@ function init() {
   }
   (window as EnhancerWindow).__ENHANCER_AI_STORIES__ = stories;
 
-  // Dispatch event to notify that data is ready (use setTimeout to ensure body id is set)
+  // Dispatch event to notify that data is ready
   setTimeout(() => {
     window.dispatchEvent(
       new CustomEvent('enhancer-ai-data-ready', { detail: { stories } }),

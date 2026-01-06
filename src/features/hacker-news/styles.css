@@ -3,30 +3,16 @@
 @import '@fontsource/open-sans/500.css';
 @import '@fontsource/open-sans/600.css';
 @import '@fontsource/open-sans/700.css';
-@import '@fontsource/newsreader/200.css';
-@import '@fontsource/newsreader/300.css';
 @import '@fontsource/newsreader/400.css';
 @import '@fontsource/newsreader/500.css';
 @import '@fontsource/newsreader/600.css';
 @import '@fontsource/newsreader/700.css';
-@import '@fontsource/newsreader/800.css';
-@import '@fontsource/newsreader/200-italic.css';
-@import '@fontsource/newsreader/300-italic.css';
-@import '@fontsource/newsreader/400-italic.css';
-@import '@fontsource/newsreader/500-italic.css';
-@import '@fontsource/newsreader/600-italic.css';
-@import '@fontsource/newsreader/700-italic.css';
-@import '@fontsource/newsreader/800-italic.css';
 
 @import 'tailwindcss';
 
 @theme {
-  --font-family-sans-open-sans: 'Open Sans', -apple-system, BlinkMacSystemFont,
-    sans-serif;
-  --font-family-serif-newsreader: 'Newsreader';
-
-  --font-family-sans: var(--font-family-sans-open-sans);
-  --font-family-serif: var(--font-family-serif-newsreader);
+  --font-family-sans: 'Open Sans', -apple-system, BlinkMacSystemFont, sans-serif;
+  --font-family-serif: 'Newsreader', serif;
 }
 
 @layer base {
