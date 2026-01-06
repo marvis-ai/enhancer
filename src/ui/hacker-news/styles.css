@@ -1,0 +1,20 @@
+/* Google Fonts Import - Add more fonts here as needed */
+@import url('https://fonts.googleapis.com/css2?family=Open+Sans:wght@400;500;600;700&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Newsreader:ital,opsz,wght@0,6..72,200..800;1,6..72,200..800&display=swap');
+
+@import 'tailwindcss';
+
+@theme {
+  --font-family-sans-open-sans: 'Open Sans', -apple-system, BlinkMacSystemFont,
+    sans-serif;
+  --font-family-serif-newsreader: 'Newsreader';
+
+  --font-family-sans: var(--font-family-sans-open-sans);
+  --font-family-serif: var(--font-family-serif-newsreader);
+}
+
+@layer base {
+  body {
+    @apply font-family-serif!;
+  }
+}

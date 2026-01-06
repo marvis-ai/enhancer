@@ -62,7 +62,7 @@ pnpm dev
 
 ### Project Structure
 
-```
+```text
 enhancer-ai/
 ├── manifest.json          # Extension manifest (v3)
 ├── popup.html            # Extension popup UI
