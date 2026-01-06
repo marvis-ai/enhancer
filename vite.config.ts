@@ -1,4 +1,5 @@
 import { defineConfig } from 'vite';
+import tailwindcss from '@tailwindcss/vite';
 import react from '@vitejs/plugin-react';
 import { glob } from 'glob';
 import { readFileSync, writeFileSync } from 'fs';
@@ -77,6 +78,7 @@ export default defineConfig(async () => {
           plugins: [['babel-plugin-react-compiler']],
         },
       }),
+      tailwindcss(),
       manifestPlugin(),
     ],
     build: {
