@@ -145,6 +145,20 @@ function scrapeStories(doc: Document = document): Story[] {
   return stories;
 }
 
+// Map section IDs to HN URLs
+function getSectionUrl(section: string): string {
+  const sectionMap: Record<string, string> = {
+    home: '/',
+    new: '/newest',
+    past: '/front',
+    comments: '/newcomments',
+    ask: '/ask',
+    show: '/show',
+    jobs: '/jobs',
+  };
+  return sectionMap[section] || '/';
+}
+
 // Fetch and scrape stories from a specific page
 async function fetchPage(pageNum: number): Promise<Story[]> {
   try {
@@ -162,11 +176,39 @@ async function fetchPage(pageNum: number): Promise<Story[]> {
   }
 }
 
-// Expose fetch function globally for React app to use
+// Fetch and scrape stories from a specific section and page
+async function fetchSection(
+  section: string,
+  pageNum: number,
+): Promise<Story[]> {
+  try {
+    const sectionPath = getSectionUrl(section);
+    const url = `${window.location.origin}${sectionPath}${
+      pageNum > 1 ? `?p=${pageNum}` : ''
+    }`;
+    const response = await fetch(url);
+    const html = await response.text();
+
+    const parser = new DOMParser();
+    const doc = parser.parseFromString(html, 'text/html');
+
+    return scrapeStories(doc);
+  } catch (e) {
+    console.error('Error fetching section:', e);
+    return [];
+  }
+}
+
+// Expose fetch functions globally for React app to use
 interface EnhancerWindow extends Window {
   __ENHANCER_AI_FETCH_PAGE__?: (pageNum: number) => Promise<Story[]>;
+  __ENHANCER_AI_FETCH_SECTION__?: (
+    section: string,
+    pageNum: number,
+  ) => Promise<Story[]>;
 }
 (window as EnhancerWindow).__ENHANCER_AI_FETCH_PAGE__ = fetchPage;
+(window as EnhancerWindow).__ENHANCER_AI_FETCH_SECTION__ = fetchSection;
 
 // Initialize the enhanced UI
 function init() {

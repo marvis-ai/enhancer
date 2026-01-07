@@ -10,17 +10,21 @@ interface HNHeaderProps {
 
 export const HNHeader = ({
   onNavigate,
-  currentSection = 'popular',
+  currentSection = 'home',
 }: HNHeaderProps) => {
   const navItems = [
-    { id: 'new', label: 'new' },
-    { id: 'past', label: 'past' },
-    { id: 'comments', label: 'comments' },
-    { id: 'ask', label: 'ask' },
-    { id: 'show', label: 'show' },
-    { id: 'jobs', label: 'jobs' },
-    { id: 'submit', label: 'submit' },
+    { id: 'new', label: 'new', path: '/newest' },
+    { id: 'past', label: 'past', path: '/front' },
+    { id: 'comments', label: 'comments', path: '/newcomments' },
+    { id: 'ask', label: 'ask', path: '/ask' },
+    { id: 'show', label: 'show', path: '/show' },
+    { id: 'jobs', label: 'jobs', path: '/jobs' },
   ];
+
+  const handleNavClick = (item: { id: string; path: string }) => {
+    window.history.pushState(null, '', item.path);
+    onNavigate?.(item.id);
+  };
 
   return (
     <header className='bg-white/90 dark:bg-primary/90 backdrop-blur-xs border-b border-zinc-200 sticky top-0 z-50'>
@@ -34,11 +38,13 @@ export const HNHeader = ({
               {navItems.map((item) => (
                 <Button
                   key={item.id}
-                  onClick={() =>
-                    window.history.pushState(null, '', `/${item.id}`)
-                  }
+                  onClick={() => handleNavClick(item)}
                   variant='ghost'
-                  className='cursor-pointer text-zinc-500 hover:text-zinc-800 transition-colors'>
+                  className={`cursor-pointer transition-colors ${
+                    currentSection === item.id
+                      ? 'text-zinc-800 font-medium'
+                      : 'text-zinc-500 hover:text-zinc-800'
+                  }`}>
                   {item.label}
                 </Button>
               ))}

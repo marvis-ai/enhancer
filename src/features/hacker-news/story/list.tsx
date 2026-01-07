@@ -4,9 +4,15 @@ import { LoaderPinwheelIcon } from 'lucide-react';
 
 interface StoryListProps {
   initialStories: Story[];
+  currentSection: string;
+  isLoading: boolean;
 }
 
-export const StoryList = ({ initialStories }: StoryListProps) => {
+export const StoryList = ({
+  initialStories,
+  currentSection,
+  isLoading,
+}: StoryListProps) => {
   const [stories, setStories] = useState<Story[]>(initialStories);
   const [currentPage, setCurrentPage] = useState(1);
   const [isLoadingMore, setIsLoadingMore] = useState(false);
@@ -16,19 +22,27 @@ export const StoryList = ({ initialStories }: StoryListProps) => {
 
   console.log({ initialStories });
 
+  // Reset state when section changes
+  useEffect(() => {
+    setStories(initialStories);
+    setCurrentPage(1);
+    setHasMore(true);
+    setIsLoadingMore(false);
+  }, [currentSection, initialStories]);
+
   const loadMoreStories = useCallback(async () => {
     if (isLoadingMore || !hasMore) return;
 
-    const fetchPage = window.__ENHANCER_AI_FETCH_PAGE__;
-    if (!fetchPage) {
-      console.error('Fetch page function not available');
+    const fetchSection = window.__ENHANCER_AI_FETCH_SECTION__;
+    if (!fetchSection) {
+      console.error('Fetch section function not available');
       return;
     }
 
     setIsLoadingMore(true);
     try {
       const nextPage = currentPage + 1;
-      const newStories = await fetchPage(nextPage);
+      const newStories = await fetchSection(currentSection, nextPage);
 
       if (newStories.length === 0) {
         setHasMore(false);
@@ -41,7 +55,7 @@ export const StoryList = ({ initialStories }: StoryListProps) => {
     } finally {
       setIsLoadingMore(false);
     }
-  }, [isLoadingMore, hasMore, currentPage]);
+  }, [isLoadingMore, hasMore, currentPage, currentSection]);
 
   useEffect(() => {
     if (observerRef.current) {
@@ -67,6 +81,17 @@ export const StoryList = ({ initialStories }: StoryListProps) => {
       }
     };
   }, [loadMoreStories, isLoadingMore, hasMore]);
+
+  if (isLoading) {
+    return (
+      <div className='flex items-center justify-center py-12'>
+        <div className='flex items-center gap-2 text-zinc-500'>
+          <LoaderPinwheelIcon className='w-5 h-5 animate-spin' />
+          <span>Loading stories...</span>
+        </div>
+      </div>
+    );
+  }
 
   if (stories.length === 0) {
     return (

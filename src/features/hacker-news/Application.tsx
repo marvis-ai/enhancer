@@ -8,7 +8,17 @@ export const HackerNewsApp = () => {
   const [stories, setStories] = useState<Story[]>(
     () => window.__ENHANCER_AI_STORIES__ || [],
   );
-  const [currentSection, setCurrentSection] = useState('popular');
+  const [currentSection, setCurrentSection] = useState(() => {
+    const path = window.location.pathname;
+    if (path === '/newest') return 'new';
+    if (path === '/front') return 'past';
+    if (path === '/newcomments') return 'comments';
+    if (path === '/ask') return 'ask';
+    if (path === '/show') return 'show';
+    if (path === '/jobs') return 'jobs';
+    return 'home';
+  });
+  const [isLoading, setIsLoading] = useState(false);
 
   useEffect(() => {
     const handleDataReady = (event: Event) => {
@@ -23,10 +33,29 @@ export const HackerNewsApp = () => {
     };
   }, []);
 
+  const handleNavigate = async (section: string) => {
+    if (section === currentSection) return;
+
+    setCurrentSection(section);
+    setIsLoading(true);
+
+    try {
+      const fetchSection = window.__ENHANCER_AI_FETCH_SECTION__;
+      if (fetchSection) {
+        const newStories = await fetchSection(section, 1);
+        setStories(newStories);
+      }
+    } catch (error) {
+      console.error('Error fetching section:', error);
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
   return (
     <main className='min-h-screen bg-linear-to-br from-purple-50/85 via-pink-50/85 to-orange-50/85 dark:from-zinc-900 dark:via-slate-800 dark:to-zinc-800'>
       <HNHeader
-        onNavigate={setCurrentSection}
+        onNavigate={handleNavigate}
         currentSection={currentSection}
       />
 
@@ -35,7 +64,11 @@ export const HackerNewsApp = () => {
         <Tabbar />
 
         {/* Story List */}
-        <StoryList initialStories={stories} />
+        <StoryList
+          initialStories={stories}
+          currentSection={currentSection}
+          isLoading={isLoading}
+        />
       </div>
     </main>
   );
