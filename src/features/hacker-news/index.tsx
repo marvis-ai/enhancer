@@ -7,7 +7,6 @@ import { HackerNewsApp } from '@/features/hacker-news/Application';
 // Wait for root element to be ready
 function mountApp() {
   const root = document.getElementById('enhancer-ai-root');
-  root?.classList.add('dark');
   if (root) {
     createRoot(root).render(
       <StrictMode>

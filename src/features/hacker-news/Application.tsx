@@ -1,5 +1,4 @@
 import { useEffect, useState } from 'react';
-import { LoaderPinwheelIcon } from 'lucide-react';
 
 import { HNHeader } from '@/features/hacker-news/header';
 import { StoryList } from '@/features/hacker-news/story/list';
@@ -9,14 +8,12 @@ export const HackerNewsApp = () => {
   const [stories, setStories] = useState<Story[]>(
     () => window.__ENHANCER_AI_STORIES__ || [],
   );
-  const [loading, setLoading] = useState(() => !window.__ENHANCER_AI_STORIES__);
   const [currentSection, setCurrentSection] = useState('popular');
 
   useEffect(() => {
     const handleDataReady = (event: Event) => {
       const customEvent = event as CustomEvent<{ stories: Story[] }>;
       setStories(customEvent.detail.stories);
-      setLoading(false);
     };
 
     window.addEventListener('enhancer-ai-data-ready', handleDataReady);
@@ -26,18 +23,8 @@ export const HackerNewsApp = () => {
     };
   }, []);
 
-  if (loading) {
-    return (
-      <div className='flex items-center justify-center min-h-screen bg-zinc-50 dark:bg-zinc-900'>
-        <div className='text-zinc-600 dark:text-zinc-400'>
-          <LoaderPinwheelIcon className='w-6 h-6 animate-spin' /> Loading...
-        </div>
-      </div>
-    );
-  }
-
   return (
-    <main className='min-h-screen bg-linear-to-br from-purple-50 via-pink-50 to-orange-50 dark:from-zinc-900 dark:via-slate-800 dark:to-zinc-800'>
+    <main className='min-h-screen bg-linear-to-br from-purple-50/85 via-pink-50/85 to-orange-50/85 dark:from-zinc-900 dark:via-slate-800 dark:to-zinc-800'>
       <HNHeader
         onNavigate={setCurrentSection}
         currentSection={currentSection}

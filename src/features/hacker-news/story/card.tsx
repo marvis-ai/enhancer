@@ -24,7 +24,7 @@ export const StoryCard = ({ story }: StoryCardProps) => {
     <motion.article
       whileHover={{ scale: 1.01 }}
       whileTap={{ scale: 0.99 }}
-      className='bg-white/90 dark:bg-primary/90 rounded-md p-4 transition-all flex items-center gap-4'>
+      className='bg-white/90 dark:bg-primary/90 backdrop-blur-xs rounded-md p-4 transition-all flex items-center gap-4'>
       <div className='flex items-center justify-center w-12 h-full'>
         <p className='text-zinc-600 dark:text-zinc-400 text-lg font-serif text-center'>
           {story.rank}
@@ -45,14 +45,14 @@ export const StoryCard = ({ story }: StoryCardProps) => {
             </a>
 
             {/* Metadata */}
-            <div className='flex items-center gap-3 text-sm text-zinc-600 mb-2'>
+            <div className='flex items-center gap-3 text-xs text-zinc-500 mb-2'>
               <div className='flex items-center gap-1'>
-                <UserIcon className='w-3.5 h-3.5' />
+                <UserIcon className='size-3' />
                 <span>{story.user}</span>
               </div>
 
               <div className='flex items-center gap-1'>
-                <ClockIcon className='w-3.5 h-3.5' />
+                <ClockIcon className='size-3' />
                 <span>{story.time}</span>
               </div>
 
@@ -61,9 +61,11 @@ export const StoryCard = ({ story }: StoryCardProps) => {
                   href={story.url}
                   target='_blank'
                   rel='noopener noreferrer'
-                  className='flex items-center gap-1 text-orange-600 hover:text-orange-800 transition-colors'>
-                  <LinkIcon className='w-3.5 h-3.5' />
-                  <span>{story.domain}</span>
+                  className='flex items-center gap-1 '>
+                  <LinkIcon className='size-3' />
+                  <span className=' text-orange-500 hover:text-orange-800 transition-colors'>
+                    {story.domain}
+                  </span>
                 </a>
               )}
             </div>
@@ -90,7 +92,7 @@ export const StoryCard = ({ story }: StoryCardProps) => {
         </div>
 
         {/* Vote Section */}
-        <div className='shrink-0 w-16 flex flex-col items-center gap-1 pt-1'>
+        <div className='shrink-0 w-20 flex flex-col items-center gap-1'>
           <Button
             className='cursor-pointer group'
             size='icon'
@@ -98,7 +100,7 @@ export const StoryCard = ({ story }: StoryCardProps) => {
             <FaCaretUp className='size-6 text-zinc-300 group-hover:text-orange-500' />
           </Button>
           <p className='flex flex-col items-center justify-center group'>
-            <span className='text-xl font-serif text-zinc-700 group-hover:text-orange-500 transition-colors text-center'>
+            <span className='text-3xl font-serif text-zinc-700 group-hover:text-orange-500 transition-colors text-center'>
               {story.points > 1000
                 ? `${(story.points / 1000).toFixed(1)}k`
                 : story.points}{' '}
