@@ -9,10 +9,10 @@ function hideOriginalDesign() {
   }
 }
 
-// Scrape stories from the original HN page
-function scrapeStories(): Story[] {
+// Scrape stories from the original HN page or a fetched page
+function scrapeStories(doc: Document = document): Story[] {
   const stories: Story[] = [];
-  const itemRows = document.querySelectorAll('tr.athing');
+  const itemRows = doc.querySelectorAll('tr.athing');
 
   itemRows.forEach((row) => {
     try {
@@ -42,16 +42,16 @@ function scrapeStories(): Story[] {
       const ageElement = metaRow.querySelector('.age');
       const time = ageElement?.textContent || '';
 
-      const subtextLinks = metaRow.querySelectorAll('.subtext > a');
-      const commentsLink = subtextLinks[subtextLinks.length - 1];
+      const subtextLinks = metaRow.querySelectorAll('.subtext .subline > a');
+      const commentsLink = Array.from(subtextLinks).find((link) =>
+        link.textContent?.includes('comment'),
+      );
       let commentsCount = 0;
       let commentsUrl = '';
 
       if (commentsLink) {
         const commentsText = commentsLink.textContent || '';
-        if (commentsText.includes('comment')) {
-          commentsCount = parseInt(commentsText.split(/\s+/)[0]) || 0;
-        }
+        commentsCount = parseInt(commentsText.split(/\s+/)[0]) || 0;
         commentsUrl = commentsLink.getAttribute('href') || '';
         if (commentsUrl && !commentsUrl.startsWith('http')) {
           commentsUrl = `https://news.ycombinator.com/${commentsUrl}`;
@@ -77,6 +77,29 @@ function scrapeStories(): Story[] {
 
   return stories;
 }
+
+// Fetch and scrape stories from a specific page
+async function fetchPage(pageNum: number): Promise<Story[]> {
+  try {
+    const url = `${window.location.origin}${window.location.pathname}?p=${pageNum}`;
+    const response = await fetch(url);
+    const html = await response.text();
+
+    const parser = new DOMParser();
+    const doc = parser.parseFromString(html, 'text/html');
+
+    return scrapeStories(doc);
+  } catch (e) {
+    console.error('Error fetching page:', e);
+    return [];
+  }
+}
+
+// Expose fetch function globally for React app to use
+interface EnhancerWindow extends Window {
+  __ENHANCER_AI_FETCH_PAGE__?: (pageNum: number) => Promise<Story[]>;
+}
+(window as EnhancerWindow).__ENHANCER_AI_FETCH_PAGE__ = fetchPage;
 
 // Initialize the enhanced UI
 function init() {

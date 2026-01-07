@@ -1,7 +1,7 @@
 {
   "manifest_version": 3,
   "name": "Enhancer AI",
-  "version": "0.1.0",
+  "version": "0.1.1",
   "description": "Enhance the reading experience on news sites with a modern, beautiful UI, and AI-powered insights",
   "permissions": [
     "storage"

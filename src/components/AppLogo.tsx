@@ -17,12 +17,12 @@ export const AppLogo = ({ enhancedFor, className }: Props) => {
       </div>
       {enhancedFor ? (
         <div className='flex justify-end items-baseline gap-2 place-content-end'>
-          <span className='text-gray-400 font-serif dark:text-gray-300 text-lg font-normal italic'>
+          <span className='text-zinc-400 font-serif dark:text-zinc-300 text-lg font-normal italic'>
             for
           </span>
           <span
             className={cn(
-              'text-gray-400 dark:text-gray-600 text-base font-semibold cursor-pointer hover:text-gray-800 transition-colors italic',
+              'text-zinc-400 dark:text-zinc-600 text-base font-semibold cursor-pointer hover:text-zinc-800 transition-colors italic',
               className,
             )}>
             {enhancedFor}
