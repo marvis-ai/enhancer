@@ -26,13 +26,17 @@ export const HNHeader = ({
     onNavigate?.(item.id);
   };
 
+  const handleLogoClick = () => {
+    onNavigate?.('home');
+  };
+
   return (
     <header className='bg-white/90 dark:bg-primary/90 backdrop-blur-xs border-b border-zinc-200 sticky top-0 z-50'>
       <div className='max-w-7xl mx-auto px-6 py-4'>
         <div className='flex items-center justify-between gap-6'>
           <div className='flex items-center gap-4'>
             {/* Logo */}
-            <HNLogo />
+            <HNLogo onNavigate={handleLogoClick} />
             {/* Navigation Menu */}
             <nav className='flex items-center gap-1'>
               {navItems.map((item) => (
