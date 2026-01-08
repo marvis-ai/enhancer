@@ -28,7 +28,9 @@ export const EnableSwitcher = ({ domain }: { domain: string | null }) => {
   return (
     <div className='flex flex-col gap-1'>
       <div className='flex items-center gap-2'>
-        <Label className='text-lg text-zinc-700'>Enable Enhancement</Label>
+        <Label className='text-lg text-zinc-700 dark:text-zinc-400'>
+          Enable Enhancement
+        </Label>
         <Switch
           className='cursor-pointer data-checked:bg-pink-600'
           checked={enabled}
@@ -39,11 +41,11 @@ export const EnableSwitcher = ({ domain }: { domain: string | null }) => {
         <a
           href={`https://${domain}`}
           target='_blank'
-          className='text-zinc-400 dark:text-zinc-100 hover:text-zinc-700 transition-colors'>
+          className='text-zinc-400 dark:text-zinc-700 hover:text-zinc-700 dark:hover:text-zinc-100 transition-colors'>
           Current: {domain} →
         </a>
       ) : (
-        <p className='text-zinc-400 dark:text-zinc-100 italic'>
+        <p className='text-zinc-400 dark:text-zinc-600 italic'>
           Extension is not available for this site.
         </p>
       )}

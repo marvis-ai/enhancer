@@ -20,7 +20,6 @@ src/
 │       ├── Header.tsx         # Header component
 │       ├── StoryList.tsx      # Story list container
 │       ├── StoryCard.tsx      # Individual story card
-│       ├── types.ts           # Shared TypeScript types
 │       ├── styles.css         # Tailwind imports
 │       └── README.md          # Component documentation
 └── lib/
