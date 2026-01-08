@@ -1,9 +1,6 @@
 // Content script for Hacker News
 // This script hides the original design and scrapes the content
 
-// Track when loading started
-const loadingStartTime = Date.now();
-
 // Immediately inject loading overlay using MutationObserver
 (function () {
   'use strict';
@@ -61,15 +58,6 @@ const loadingStartTime = Date.now();
 
 // Remove loading screen with minimum 1 second delay
 async function hideLoadingScreen() {
-  const elapsed = Date.now() - loadingStartTime;
-  const minLoadingTime = 3000; // 1.5 second
-
-  if (elapsed < minLoadingTime) {
-    await new Promise((resolve) =>
-      setTimeout(resolve, minLoadingTime - elapsed),
-    );
-  }
-
   const loadingDiv = document.getElementById('enhancer-ai-loading');
   if (loadingDiv) {
     loadingDiv.remove();
