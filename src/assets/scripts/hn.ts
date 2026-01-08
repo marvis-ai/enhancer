@@ -145,6 +145,27 @@ function scrapeStories(doc: Document = document): Story[] {
   return stories;
 }
 
+// Parse the next page URL from the "More" link
+function getNextPageUrl(doc: Document): string | null {
+  const moreLink = doc.querySelector('a.morelink[rel="next"]');
+  if (!moreLink) {
+    return null;
+  }
+
+  const href = moreLink.getAttribute('href');
+  if (!href) {
+    return null;
+  }
+
+  // Return the full URL
+  if (href.startsWith('http')) {
+    return href;
+  }
+
+  // Handle relative URLs
+  return `${window.location.origin}${href.startsWith('/') ? href : '/' + href}`;
+}
+
 // Map section IDs to HN URLs
 function getSectionUrl(section: string): string {
   const sectionMap: Record<string, string> = {
@@ -159,55 +180,66 @@ function getSectionUrl(section: string): string {
   return sectionMap[section] || '/';
 }
 
-// Fetch and scrape stories from a specific page
-async function fetchPage(pageNum: number): Promise<Story[]> {
+// Store the next page URL for each section
+const nextPageUrls: Record<string, string | null> = {};
+
+// Fetch and scrape stories from a specific URL
+async function fetchFromUrl(
+  url: string,
+): Promise<{ stories: Story[]; nextPageUrl: string | null }> {
   try {
-    const url = `${window.location.origin}${window.location.pathname}?p=${pageNum}`;
     const response = await fetch(url);
     const html = await response.text();
 
     const parser = new DOMParser();
     const doc = parser.parseFromString(html, 'text/html');
 
-    return scrapeStories(doc);
+    const stories = scrapeStories(doc);
+    const nextPageUrl = getNextPageUrl(doc);
+
+    return { stories, nextPageUrl };
   } catch (e) {
-    console.error('Error fetching page:', e);
-    return [];
+    console.error('Error fetching from URL:', e);
+    return { stories: [], nextPageUrl: null };
   }
 }
 
-// Fetch and scrape stories from a specific section and page
+// Fetch and scrape stories from a specific section
 async function fetchSection(
   section: string,
-  pageNum: number,
-): Promise<Story[]> {
+  isNextPage: boolean = false,
+): Promise<{ stories: Story[]; hasMore: boolean }> {
   try {
-    const sectionPath = getSectionUrl(section);
-    const url = `${window.location.origin}${sectionPath}${
-      pageNum > 1 ? `?p=${pageNum}` : ''
-    }`;
-    const response = await fetch(url);
-    const html = await response.text();
+    let url: string;
 
-    const parser = new DOMParser();
-    const doc = parser.parseFromString(html, 'text/html');
+    if (isNextPage && nextPageUrls[section]) {
+      // Use the stored next page URL
+      url = nextPageUrls[section]!;
+    } else {
+      // First page of the section
+      const sectionPath = getSectionUrl(section);
+      url = `${window.location.origin}${sectionPath}`;
+    }
 
-    return scrapeStories(doc);
+    const { stories, nextPageUrl } = await fetchFromUrl(url);
+
+    // Store the next page URL for this section
+    nextPageUrls[section] = nextPageUrl;
+
+    return { stories, hasMore: nextPageUrl !== null };
   } catch (e) {
     console.error('Error fetching section:', e);
-    return [];
+    return { stories: [], hasMore: false };
   }
 }
 
 // Expose fetch functions globally for React app to use
 interface EnhancerWindow extends Window {
-  __ENHANCER_AI_FETCH_PAGE__?: (pageNum: number) => Promise<Story[]>;
   __ENHANCER_AI_FETCH_SECTION__?: (
     section: string,
-    pageNum: number,
-  ) => Promise<Story[]>;
+    isNextPage?: boolean,
+  ) => Promise<{ stories: Story[]; hasMore: boolean }>;
 }
-(window as EnhancerWindow).__ENHANCER_AI_FETCH_PAGE__ = fetchPage;
 (window as EnhancerWindow).__ENHANCER_AI_FETCH_SECTION__ = fetchSection;
 
 // Initialize the enhanced UI
@@ -220,6 +252,22 @@ function init() {
   // Scrape stories and store them
   const stories = scrapeStories();
 
+  // Extract and store the next page URL from the initial page
+  const nextPageUrl = getNextPageUrl(document);
+
+  // Determine the current section from the URL
+  const path = window.location.pathname;
+  let currentSection = 'home';
+  if (path === '/newest') currentSection = 'new';
+  else if (path === '/front') currentSection = 'past';
+  else if (path === '/newcomments') currentSection = 'comments';
+  else if (path === '/ask') currentSection = 'ask';
+  else if (path === '/show') currentSection = 'show';
+  else if (path === '/jobs') currentSection = 'jobs';
+
+  // Store the next page URL for the current section
+  nextPageUrls[currentSection] = nextPageUrl;
+
   // Store stories in a global variable for the React app to access
   window.__ENHANCER_AI_STORIES__ = stories;
 
@@ -227,7 +275,9 @@ function init() {
   // setTimeout ensures the UI script has attached its event listener
   setTimeout(() => {
     window.dispatchEvent(
-      new CustomEvent('enhancer-ai-data-ready', { detail: { stories } }),
+      new CustomEvent('enhancer-ai-data-ready', {
+        detail: { stories, hasMore: nextPageUrl !== null },
+      }),
     );
     // Hide loading screen once data is ready
     hideLoadingScreen();

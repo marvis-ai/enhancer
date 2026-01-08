@@ -19,11 +19,16 @@ export const HackerNewsApp = () => {
     return 'home';
   });
   const [isLoading, setIsLoading] = useState(false);
+  const [hasMore, setHasMore] = useState(true);
 
   useEffect(() => {
     const handleDataReady = (event: Event) => {
-      const customEvent = event as CustomEvent<{ stories: Story[] }>;
+      const customEvent = event as CustomEvent<{
+        stories: Story[];
+        hasMore: boolean;
+      }>;
       setStories(customEvent.detail.stories);
+      setHasMore(customEvent.detail.hasMore);
     };
 
     window.addEventListener('enhancer-ai-data-ready', handleDataReady);
@@ -42,8 +47,10 @@ export const HackerNewsApp = () => {
     try {
       const fetchSection = window.__ENHANCER_AI_FETCH_SECTION__;
       if (fetchSection) {
-        const newStories = await fetchSection(section, 1);
+        const { stories: newStories, hasMore: moreAvailable } =
+          await fetchSection(section, false);
         setStories(newStories);
+        setHasMore(moreAvailable);
       }
     } catch (error) {
       console.error('Error fetching section:', error);
@@ -68,6 +75,7 @@ export const HackerNewsApp = () => {
           initialStories={stories}
           currentSection={currentSection}
           isLoading={isLoading}
+          initialHasMore={hasMore}
         />
       </div>
     </main>

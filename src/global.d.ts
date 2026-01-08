@@ -19,9 +19,8 @@ interface EnhancedSiteProps {
 
 interface Window {
   __ENHANCER_AI_STORIES__?: Story[];
-  __ENHANCER_AI_FETCH_PAGE__?: (pageNum: number) => Promise<Story[]>;
   __ENHANCER_AI_FETCH_SECTION__?: (
     section: string,
-    pageNum: number,
-  ) => Promise<Story[]>;
+    isNextPage?: boolean,
+  ) => Promise<{ stories: Story[]; hasMore: boolean }>;
 }

@@ -6,29 +6,27 @@ interface StoryListProps {
   initialStories: Story[];
   currentSection: string;
   isLoading: boolean;
+  initialHasMore: boolean;
 }
 
 export const StoryList = ({
   initialStories,
   currentSection,
   isLoading,
+  initialHasMore,
 }: StoryListProps) => {
   const [stories, setStories] = useState<Story[]>(initialStories);
-  const [currentPage, setCurrentPage] = useState(1);
   const [isLoadingMore, setIsLoadingMore] = useState(false);
-  const [hasMore, setHasMore] = useState(true);
+  const [hasMore, setHasMore] = useState(initialHasMore);
   const observerRef = useRef<IntersectionObserver | null>(null);
   const loadMoreRef = useRef<HTMLDivElement>(null);
-
-  console.log({ initialStories });
 
   // Reset state when section changes
   useEffect(() => {
     setStories(initialStories);
-    setCurrentPage(1);
-    setHasMore(true);
+    setHasMore(initialHasMore);
     setIsLoadingMore(false);
-  }, [currentSection, initialStories]);
+  }, [currentSection, initialStories, initialHasMore]);
 
   const loadMoreStories = useCallback(async () => {
     if (isLoadingMore || !hasMore) return;
@@ -41,21 +39,21 @@ export const StoryList = ({
 
     setIsLoadingMore(true);
     try {
-      const nextPage = currentPage + 1;
-      const newStories = await fetchSection(currentSection, nextPage);
+      const { stories: newStories, hasMore: moreAvailable } =
+        await fetchSection(currentSection, true);
 
       if (newStories.length === 0) {
         setHasMore(false);
       } else {
         setStories((prev) => [...prev, ...newStories]);
-        setCurrentPage(nextPage);
+        setHasMore(moreAvailable);
       }
     } catch (error) {
       console.error('Error loading more stories:', error);
     } finally {
       setIsLoadingMore(false);
     }
-  }, [isLoadingMore, hasMore, currentPage, currentSection]);
+  }, [isLoadingMore, hasMore, currentSection]);
 
   useEffect(() => {
     if (observerRef.current) {
@@ -87,7 +85,7 @@ export const StoryList = ({
       <div className='flex items-center justify-center py-12'>
         <div className='flex items-center gap-2 text-zinc-500'>
           <LoaderPinwheelIcon className='w-5 h-5 animate-spin' />
-          <span>Loading stories...</span>
+          <span>Loading...</span>
         </div>
       </div>
     );
@@ -115,7 +113,7 @@ export const StoryList = ({
           {isLoadingMore && (
             <div className='flex items-center gap-2 text-zinc-500'>
               <LoaderPinwheelIcon className='w-5 h-5 animate-spin' />
-              <span>Loading more stories...</span>
+              <span>Loading more...</span>
             </div>
           )}
         </div>
