@@ -56,7 +56,7 @@
   observer.observe(document.documentElement, { childList: true });
 })();
 
-// Remove loading screen with minimum 1 second delay
+// Remove loading screen
 async function hideLoadingScreen() {
   const loadingDiv = document.getElementById('enhancer-ai-loading');
   if (loadingDiv) {
@@ -185,6 +185,9 @@ async function fetchFromUrl(
 ): Promise<{ stories: Story[]; nextPageUrl: string | null }> {
   try {
     const response = await fetch(url);
+    if (!response.ok) {
+      throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+    }
     const html = await response.text();
 
     const parser = new DOMParser();
