@@ -110,15 +110,23 @@ function scrapeStories(doc: Document = document): Story[] {
       const time = ageElement?.textContent || '';
 
       const subtextLinks = metaRow.querySelectorAll('.subtext .subline > a');
-      const commentsLink = Array.from(subtextLinks).find((link) =>
-        link.textContent?.includes('comment'),
+      const commentsLink = Array.from(subtextLinks).find(
+        (link) =>
+          link.textContent?.includes('comment') ||
+          link.textContent?.includes('discuss'),
       );
       let commentsCount = 0;
       let commentsUrl = '';
 
       if (commentsLink) {
         const commentsText = commentsLink.textContent || '';
-        commentsCount = parseInt(commentsText.split(/\s+/)[0]) || 0;
+        if (commentsText.includes('discuss')) {
+          // Handle "discuss" case - no comments but discussion link exists
+          commentsCount = 0;
+        } else {
+          // Handle "X comments" case
+          commentsCount = parseInt(commentsText.split(/\s+/)[0]) || 0;
+        }
         commentsUrl = commentsLink.getAttribute('href') || '';
         if (commentsUrl && !commentsUrl.startsWith('http')) {
           commentsUrl = `https://news.ycombinator.com/${commentsUrl}`;
