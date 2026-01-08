@@ -41,11 +41,11 @@ export const EnableSwitcher = ({ domain }: { domain: string | null }) => {
         <a
           href={`https://${domain}`}
           target='_blank'
-          className='text-zinc-400 dark:text-zinc-700 hover:text-zinc-700 dark:hover:text-zinc-400 transition-colors'>
+          className='text-zinc-400 dark:text-zinc-700 hover:text-zinc-700 dark:hover:text-zinc-100 transition-colors'>
           Current: {domain} →
         </a>
       ) : (
-        <p className='text-zinc-400 dark:text-zinc-700 italic'>
+        <p className='text-zinc-400 dark:text-zinc-600 italic'>
           Extension is not available for this site.
         </p>
       )}

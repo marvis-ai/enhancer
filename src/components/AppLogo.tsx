@@ -8,7 +8,7 @@ type Props = {
 
 export const AppLogo = ({ enhancedFor, className }: Props) => {
   return (
-    <div className='flex flex-col gap-1 border-b border-zinc-200/90 dark:border-zinc-800/900 border-dashed pb-4'>
+    <div className='flex flex-col gap-1 border-b border-zinc-200/90 dark:border-zinc-800/90 border-dashed pb-4'>
       <div className='flex gap-2'>
         <SnailIcon className='size-9 text-pink-500' />
         <h1 className='text-3xl font-thin flex flex-col gap-2 text-zinc-700 dark:text-zinc-300'>

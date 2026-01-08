@@ -1,4 +1,4 @@
-import { useEffect } from 'react';
+import { useEffect, useCallback } from 'react';
 
 import { HNHeader } from '@/features/hacker-news/header';
 import { StoryList } from '@/features/hacker-news/story/list';
@@ -8,15 +8,29 @@ export const HackerNewsApp = () => {
   const { currentSection, setCurrentSection, initializeSection, loadSection } =
     useHNStore();
 
+  const getPathSection = (path: string): string => {
+    if (path === '/newest') return 'new';
+    if (path === '/front') return 'past';
+    if (path === '/newcomments') return 'comments';
+    if (path === '/ask') return 'ask';
+    if (path === '/show') return 'show';
+    if (path === '/jobs') return 'jobs';
+    return 'home';
+  };
+
+  const handleNavigate = useCallback(
+    async (section: string) => {
+      if (section === currentSection) return;
+
+      setCurrentSection(section);
+      await loadSection(section);
+    },
+    [currentSection, setCurrentSection, loadSection],
+  );
+
   useEffect(() => {
     const path = window.location.pathname;
-    let section = 'home';
-    if (path === '/newest') section = 'new';
-    else if (path === '/front') section = 'past';
-    else if (path === '/newcomments') section = 'comments';
-    else if (path === '/ask') section = 'ask';
-    else if (path === '/show') section = 'show';
-    else if (path === '/jobs') section = 'jobs';
+    const section = getPathSection(path);
 
     setCurrentSection(section);
 
@@ -45,19 +59,20 @@ export const HackerNewsApp = () => {
       );
     };
 
+    const handlePopState = () => {
+      const path = window.location.pathname;
+      const section = getPathSection(path);
+      handleNavigate(section);
+    };
+
     window.addEventListener('enhancer-ai-data-ready', handleDataReady);
+    window.addEventListener('popstate', handlePopState);
 
     return () => {
       window.removeEventListener('enhancer-ai-data-ready', handleDataReady);
+      window.removeEventListener('popstate', handlePopState);
     };
-  }, [setCurrentSection, initializeSection]);
-
-  const handleNavigate = async (section: string) => {
-    if (section === currentSection) return;
-
-    setCurrentSection(section);
-    await loadSection(section);
-  };
+  }, [setCurrentSection, initializeSection, handleNavigate]);
 
   return (
     <main className='min-h-screen bg-linear-to-br from-purple-50/85 via-pink-50/85 to-orange-50/85 dark:from-zinc-900 dark:via-slate-800 dark:to-zinc-800'>

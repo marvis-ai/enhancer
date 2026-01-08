@@ -7,7 +7,6 @@ interface HNLogoProps {
 export const HNLogo = ({ onNavigate }: HNLogoProps) => {
   const handleClick = (e: React.MouseEvent) => {
     e.preventDefault();
-    window.history.pushState(null, '', '/');
     onNavigate?.();
   };
 

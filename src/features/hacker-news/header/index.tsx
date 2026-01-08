@@ -27,6 +27,7 @@ export const HNHeader = ({
   };
 
   const handleLogoClick = () => {
+    window.history.pushState(null, '', '/');
     onNavigate?.('home');
   };
 
