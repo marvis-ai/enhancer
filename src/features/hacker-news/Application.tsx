@@ -1,34 +1,48 @@
-import { useEffect, useState } from 'react';
+import { useEffect } from 'react';
 
 import { HNHeader } from '@/features/hacker-news/header';
 import { StoryList } from '@/features/hacker-news/story/list';
-import { Tabbar } from '@/features/hacker-news/header/tabbar';
+import { useHNStore } from '@/features/hacker-news/store/hn';
 
 export const HackerNewsApp = () => {
-  const [stories, setStories] = useState<Story[]>(
-    () => window.__ENHANCER_AI_STORIES__ || [],
-  );
-  const [currentSection, setCurrentSection] = useState(() => {
-    const path = window.location.pathname;
-    if (path === '/newest') return 'new';
-    if (path === '/front') return 'past';
-    if (path === '/newcomments') return 'comments';
-    if (path === '/ask') return 'ask';
-    if (path === '/show') return 'show';
-    if (path === '/jobs') return 'jobs';
-    return 'home';
-  });
-  const [isLoading, setIsLoading] = useState(false);
-  const [hasMore, setHasMore] = useState(true);
+  const { currentSection, setCurrentSection, initializeSection, loadSection } =
+    useHNStore();
 
   useEffect(() => {
+    const path = window.location.pathname;
+    let section = 'home';
+    if (path === '/newest') section = 'new';
+    else if (path === '/front') section = 'past';
+    else if (path === '/newcomments') section = 'comments';
+    else if (path === '/ask') section = 'ask';
+    else if (path === '/show') section = 'show';
+    else if (path === '/jobs') section = 'jobs';
+
+    setCurrentSection(section);
+
+    // Initialize with existing stories if available
+    const initialStories = window.__ENHANCER_AI_STORIES__ || [];
+    if (initialStories.length > 0) {
+      // Extract next page URL from the document
+      const moreLink = document.querySelector('a.morelink[rel="next"]');
+      const nextPageUrl = moreLink?.getAttribute('href') || null;
+      initializeSection(section, initialStories, true);
+
+      // Update the section data with the nextPageUrl
+      const { updateSectionData } = useHNStore.getState();
+      updateSectionData(section, initialStories, nextPageUrl, true, false);
+    }
+
     const handleDataReady = (event: Event) => {
       const customEvent = event as CustomEvent<{
         stories: Story[];
         hasMore: boolean;
       }>;
-      setStories(customEvent.detail.stories);
-      setHasMore(customEvent.detail.hasMore);
+      initializeSection(
+        section,
+        customEvent.detail.stories,
+        customEvent.detail.hasMore,
+      );
     };
 
     window.addEventListener('enhancer-ai-data-ready', handleDataReady);
@@ -36,27 +50,13 @@ export const HackerNewsApp = () => {
     return () => {
       window.removeEventListener('enhancer-ai-data-ready', handleDataReady);
     };
-  }, []);
+  }, [setCurrentSection, initializeSection]);
 
   const handleNavigate = async (section: string) => {
     if (section === currentSection) return;
 
     setCurrentSection(section);
-    setIsLoading(true);
-
-    try {
-      const fetchSection = window.__ENHANCER_AI_FETCH_SECTION__;
-      if (fetchSection) {
-        const { stories: newStories, hasMore: moreAvailable } =
-          await fetchSection(section, false);
-        setStories(newStories);
-        setHasMore(moreAvailable);
-      }
-    } catch (error) {
-      console.error('Error fetching section:', error);
-    } finally {
-      setIsLoading(false);
-    }
+    await loadSection(section);
   };
 
   return (
@@ -67,16 +67,8 @@ export const HackerNewsApp = () => {
       />
 
       <div className='max-w-5xl mx-auto px-6 py-6 gap-6'>
-        {/* Tabs */}
-        <Tabbar />
-
         {/* Story List */}
-        <StoryList
-          initialStories={stories}
-          currentSection={currentSection}
-          isLoading={isLoading}
-          initialHasMore={hasMore}
-        />
+        <StoryList currentSection={currentSection} />
       </div>
     </main>
   );

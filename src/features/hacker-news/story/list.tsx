@@ -1,59 +1,31 @@
-import { useEffect, useRef, useState, useCallback } from 'react';
+import { useEffect, useRef, useCallback } from 'react';
 import { StoryCard } from '@/features/hacker-news/story/card';
 import { LoaderPinwheelIcon } from 'lucide-react';
+import { useHNStore } from '@/features/hacker-news/store/hn';
 
 interface StoryListProps {
-  initialStories: Story[];
   currentSection: string;
-  isLoading: boolean;
-  initialHasMore: boolean;
 }
 
-export const StoryList = ({
-  initialStories,
-  currentSection,
-  isLoading,
-  initialHasMore,
-}: StoryListProps) => {
-  const [stories, setStories] = useState<Story[]>(initialStories);
-  const [isLoadingMore, setIsLoadingMore] = useState(false);
-  const [hasMore, setHasMore] = useState(initialHasMore);
+export const StoryList = ({ currentSection }: StoryListProps) => {
+  const { sections, loadMoreStories } = useHNStore();
   const observerRef = useRef<IntersectionObserver | null>(null);
   const loadMoreRef = useRef<HTMLDivElement>(null);
 
-  // Reset state when section changes
-  useEffect(() => {
-    setStories(initialStories);
-    setHasMore(initialHasMore);
-    setIsLoadingMore(false);
-  }, [currentSection, initialStories, initialHasMore]);
+  const sectionData = sections[currentSection] || {
+    stories: [],
+    isLoading: false,
+    isLoadingMore: false,
+    hasMore: false,
+    nextPageUrl: null,
+  };
 
-  const loadMoreStories = useCallback(async () => {
-    if (isLoadingMore || !hasMore) return;
+  const { stories, isLoading, isLoadingMore, hasMore } = sectionData;
 
-    const fetchSection = window.__ENHANCER_AI_FETCH_SECTION__;
-    if (!fetchSection) {
-      console.error('Fetch section function not available');
-      return;
-    }
-
-    setIsLoadingMore(true);
-    try {
-      const { stories: newStories, hasMore: moreAvailable } =
-        await fetchSection(currentSection, true);
-
-      if (newStories.length === 0) {
-        setHasMore(false);
-      } else {
-        setStories((prev) => [...prev, ...newStories]);
-        setHasMore(moreAvailable);
-      }
-    } catch (error) {
-      console.error('Error loading more stories:', error);
-    } finally {
-      setIsLoadingMore(false);
-    }
-  }, [isLoadingMore, hasMore, currentSection]);
+  const handleLoadMore = useCallback(async () => {
+    if (isLoading || isLoadingMore || !hasMore) return;
+    await loadMoreStories(currentSection);
+  }, [isLoading, isLoadingMore, hasMore, currentSection, loadMoreStories]);
 
   useEffect(() => {
     if (observerRef.current) {
@@ -62,8 +34,13 @@ export const StoryList = ({
 
     observerRef.current = new IntersectionObserver(
       (entries) => {
-        if (entries[0].isIntersecting && !isLoadingMore && hasMore) {
-          loadMoreStories();
+        if (
+          entries[0].isIntersecting &&
+          !isLoading &&
+          !isLoadingMore &&
+          hasMore
+        ) {
+          handleLoadMore();
         }
       },
       { threshold: 0.1 },
@@ -78,7 +55,7 @@ export const StoryList = ({
         observerRef.current.disconnect();
       }
     };
-  }, [loadMoreStories, isLoadingMore, hasMore]);
+  }, [handleLoadMore, isLoading, isLoadingMore, hasMore]);
 
   if (isLoading) {
     return (
