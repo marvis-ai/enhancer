@@ -41,7 +41,7 @@ export const StoryCard = ({ story }: StoryCardProps) => {
               target='_blank'
               rel='noopener noreferrer'
               title={story.title}
-              className='text-2xl text-zinc-700! visited:text-zinc-500! hover:text-orange-600! transition-colors block mb-2 leading-snug cursor-pointer'>
+              className='text-2xl text-zinc-700! visited:text-zinc-500! hover:text-orange-600! dark:text-zinc-300! dark:visited:text-zinc-400! transition-colors block mb-2 leading-snug cursor-pointer'>
               {story.title}
             </a>
 
@@ -120,15 +120,15 @@ export const StoryCard = ({ story }: StoryCardProps) => {
         </div>
 
         {/* Vote Section */}
-        <div className='shrink-0 w-24 flex flex-col items-center gap-0.5 group'>
+        <div className='shrink-0 w-24 flex flex-col items-center justify-center gap-0.5 group'>
           <Button
             className='cursor-pointer'
             size='icon'
             variant='ghost'>
             <FaCaretUp className='size-6 text-zinc-300 group-hover:text-orange-500' />
           </Button>
-          <p className='flex flex-col items-center justify-center'>
-            <span className='text-3xl font-serif text-zinc-700 group-hover:text-orange-500 transition-colors text-center'>
+          <p className='flex flex-col items-center justify-center gap-0'>
+            <span className='text-3xl font-serif text-zinc-600 group-hover:text-orange-500 transition-colors text-center'>
               {story.points > 1000
                 ? `${(story.points / 1000).toFixed(1)}k`
                 : story.points}{' '}

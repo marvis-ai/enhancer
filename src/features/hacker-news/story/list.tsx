@@ -11,6 +11,7 @@ export const StoryList = ({ currentSection }: StoryListProps) => {
   const { sections, loadMoreStories } = useHNStore();
   const observerRef = useRef<IntersectionObserver | null>(null);
   const loadMoreRef = useRef<HTMLDivElement>(null);
+  const debounceTimerRef = useRef<NodeJS.Timeout | null>(null);
 
   const sectionData = sections[currentSection] || {
     stories: [],
@@ -24,7 +25,17 @@ export const StoryList = ({ currentSection }: StoryListProps) => {
 
   const handleLoadMore = useCallback(async () => {
     if (isLoading || isLoadingMore || !hasMore) return;
-    await loadMoreStories(currentSection);
+
+    // Clear any existing debounce timer
+    if (debounceTimerRef.current) {
+      clearTimeout(debounceTimerRef.current);
+    }
+
+    // Debounce the load more call
+    debounceTimerRef.current = setTimeout(async () => {
+      await loadMoreStories(currentSection);
+      debounceTimerRef.current = null;
+    }, 100); // 100ms debounce
   }, [isLoading, isLoadingMore, hasMore, currentSection, loadMoreStories]);
 
   useEffect(() => {
@@ -53,6 +64,9 @@ export const StoryList = ({ currentSection }: StoryListProps) => {
     return () => {
       if (observerRef.current) {
         observerRef.current.disconnect();
+      }
+      if (debounceTimerRef.current) {
+        clearTimeout(debounceTimerRef.current);
       }
     };
   }, [handleLoadMore, isLoading, isLoadingMore, hasMore]);

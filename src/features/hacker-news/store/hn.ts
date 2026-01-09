@@ -11,6 +11,7 @@ interface SectionData {
 interface HNStore {
   sections: Record<string, SectionData>;
   currentSection: string;
+  loadingSections: Set<string>; // Track sections being loaded
 
   // Actions
   setCurrentSection: (section: string) => void;
@@ -43,24 +44,32 @@ const createEmptySectionData = (): SectionData => ({
 export const useHNStore = create<HNStore>((set, get) => ({
   sections: {},
   currentSection: 'home',
+  loadingSections: new Set(),
 
   setCurrentSection: (section: string) => {
     set({ currentSection: section });
   },
 
   initializeSection: (section: string, stories: Story[], hasMore: boolean) => {
-    set((state) => ({
-      sections: {
-        ...state.sections,
-        [section]: {
-          stories,
-          nextPageUrl: null,
-          isLoading: false,
-          isLoadingMore: false,
-          hasMore,
+    set((state) => {
+      // Only initialize if the section doesn't exist or has no stories
+      if (state.sections[section]?.stories.length > 0) {
+        return state;
+      }
+
+      return {
+        sections: {
+          ...state.sections,
+          [section]: {
+            stories,
+            nextPageUrl: null,
+            isLoading: false,
+            isLoadingMore: false,
+            hasMore,
+          },
         },
-      },
-    }));
+      };
+    });
   },
 
   setLoading: (section: string, isLoading: boolean) => {
@@ -121,10 +130,18 @@ export const useHNStore = create<HNStore>((set, get) => ({
   loadSection: async (section: string) => {
     const state = get();
 
-    // If section already has data, don't reload
-    if (state.sections[section]?.stories.length > 0) {
+    // If section already has data or is being loaded, don't reload
+    if (
+      state.sections[section]?.stories.length > 0 ||
+      state.loadingSections.has(section)
+    ) {
       return;
     }
+
+    // Add to loading sections
+    set((prevState) => ({
+      loadingSections: new Set([...prevState.loadingSections, section]),
+    }));
 
     // Set loading state
     get().setLoading(section, true);
@@ -143,6 +160,13 @@ export const useHNStore = create<HNStore>((set, get) => ({
     } catch (error) {
       console.error('Error loading section:', error);
       get().setLoading(section, false);
+    } finally {
+      // Remove from loading sections
+      set((prevState) => {
+        const newLoadingSections = new Set(prevState.loadingSections);
+        newLoadingSections.delete(section);
+        return { loadingSections: newLoadingSections };
+      });
     }
   },
 

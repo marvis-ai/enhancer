@@ -22,6 +22,9 @@ export const HackerNewsApp = () => {
     async (section: string) => {
       if (section === currentSection) return;
 
+      // Scroll to top instantly when switching sections
+      window.scrollTo({ top: 0 });
+
       setCurrentSection(section);
       await loadSection(section);
     },
@@ -40,11 +43,16 @@ export const HackerNewsApp = () => {
       // Extract next page URL from the document
       const moreLink = document.querySelector('a.morelink[rel="next"]');
       const nextPageUrl = moreLink?.getAttribute('href') || null;
-      initializeSection(section, initialStories, true);
 
-      // Update the section data with the nextPageUrl
-      const { updateSectionData } = useHNStore.getState();
-      updateSectionData(section, initialStories, nextPageUrl, true, false);
+      // Only initialize if the section doesn't already have data
+      const currentState = useHNStore.getState();
+      if (!currentState.sections[section]?.stories.length) {
+        initializeSection(section, initialStories, true);
+
+        // Update the section data with the nextPageUrl
+        const { updateSectionData } = useHNStore.getState();
+        updateSectionData(section, initialStories, nextPageUrl, true, false);
+      }
     }
 
     const handleDataReady = (event: Event) => {
@@ -52,16 +60,23 @@ export const HackerNewsApp = () => {
         stories: Story[];
         hasMore: boolean;
       }>;
-      initializeSection(
-        section,
-        customEvent.detail.stories,
-        customEvent.detail.hasMore,
-      );
+
+      // Only initialize if the section doesn't already have data
+      const currentState = useHNStore.getState();
+      if (!currentState.sections[section]?.stories.length) {
+        initializeSection(
+          section,
+          customEvent.detail.stories,
+          customEvent.detail.hasMore,
+        );
+      }
     };
 
     const handlePopState = () => {
       const path = window.location.pathname;
       const section = getPathSection(path);
+      // Scroll to top instantly when navigating via browser back/forward
+      window.scrollTo({ top: 0 });
       handleNavigate(section);
     };
 

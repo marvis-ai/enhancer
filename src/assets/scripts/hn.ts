@@ -179,27 +179,51 @@ function getSectionUrl(section: string): string {
 // Store the next page URL for each section
 const nextPageUrls: Record<string, string | null> = {};
 
-// Fetch and scrape stories from a specific URL
+// Track ongoing requests to avoid duplicates
+const ongoingRequests: Record<
+  string,
+  Promise<{ stories: Story[]; nextPageUrl: string | null }> | null
+> = {};
+
+// Fetch and scrape stories from a specific URL with deduplication
 async function fetchFromUrl(
   url: string,
 ): Promise<{ stories: Story[]; nextPageUrl: string | null }> {
-  try {
-    const response = await fetch(url);
-    if (!response.ok) {
-      throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+  // Check if there's already an ongoing request for this URL
+  if (ongoingRequests[url]) {
+    return ongoingRequests[url]!;
+  }
+
+  // Create the request and store it
+  const requestPromise = (async () => {
+    try {
+      const response = await fetch(url);
+      if (!response.ok) {
+        throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+      }
+      const html = await response.text();
+
+      const parser = new DOMParser();
+      const doc = parser.parseFromString(html, 'text/html');
+
+      const stories = scrapeStories(doc);
+      const nextPageUrl = getNextPageUrl(doc);
+
+      return { stories, nextPageUrl };
+    } catch (e) {
+      console.error('Error fetching from URL:', e);
+      return { stories: [], nextPageUrl: null };
     }
-    const html = await response.text();
+  })();
 
-    const parser = new DOMParser();
-    const doc = parser.parseFromString(html, 'text/html');
+  ongoingRequests[url] = requestPromise;
 
-    const stories = scrapeStories(doc);
-    const nextPageUrl = getNextPageUrl(doc);
-
-    return { stories, nextPageUrl };
-  } catch (e) {
-    console.error('Error fetching from URL:', e);
-    return { stories: [], nextPageUrl: null };
+  try {
+    const result = await requestPromise;
+    return result;
+  } finally {
+    // Clean up the ongoing request reference
+    delete ongoingRequests[url];
   }
 }
 
