@@ -13,7 +13,7 @@ import {
 import { FaCaretUp } from 'react-icons/fa';
 
 interface StoryCardProps {
-  story: Story;
+  story: HNStory;
 }
 
 export const StoryCard = ({ story }: StoryCardProps) => {
