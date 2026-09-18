@@ -1,7 +1,10 @@
 import { create } from 'zustand';
 
+type SectionType = 'stories' | 'comments';
+
 interface SectionData {
-  stories: Story[];
+  items: HNStory[] | HNComment[];
+  sectionType: SectionType;
   nextPageUrl: string | null;
   isLoadingMore: boolean;
   isLoading: boolean;
@@ -11,12 +14,13 @@ interface SectionData {
 interface HNStore {
   sections: Record<string, SectionData>;
   currentSection: string;
+  loadingSections: Set<string>; // Track sections being loaded
 
   // Actions
   setCurrentSection: (section: string) => void;
   initializeSection: (
     section: string,
-    stories: Story[],
+    data: HNStory[] | HNComment[],
     hasMore: boolean,
   ) => void;
   loadSection: (section: string) => Promise<void>;
@@ -25,42 +29,69 @@ interface HNStore {
   setLoadingMore: (section: string, isLoadingMore: boolean) => void;
   updateSectionData: (
     section: string,
-    stories: Story[],
+    data: HNStory[] | HNComment[],
     nextPageUrl: string | null,
     hasMore: boolean,
     append?: boolean,
   ) => void;
 }
 
-const createEmptySectionData = (): SectionData => ({
-  stories: [],
+const createEmptySectionData = (sectionType: SectionType): SectionData => ({
+  items: [],
+  sectionType,
   nextPageUrl: null,
   isLoading: false,
   isLoadingMore: false,
   hasMore: true,
 });
 
+const isCommentSection = (section: string): boolean => {
+  return (
+    section === 'newcomments' ||
+    section === 'bestcomments' ||
+    section === 'best24comments'
+  );
+};
+
 export const useHNStore = create<HNStore>((set, get) => ({
   sections: {},
   currentSection: 'home',
+  loadingSections: new Set(),
 
   setCurrentSection: (section: string) => {
     set({ currentSection: section });
   },
 
-  initializeSection: (section: string, stories: Story[], hasMore: boolean) => {
-    set((state) => ({
-      sections: {
-        ...state.sections,
-        [section]: {
-          stories,
-          nextPageUrl: null,
-          isLoading: false,
-          isLoadingMore: false,
-          hasMore,
+  initializeSection: (
+    section: string,
+    data: HNStory[] | HNComment[],
+    hasMore: boolean,
+  ) => {
+    set((state) => {
+      // Only initialize if the section doesn't exist or has no data
+      const existingSection = state.sections[section];
+      if (existingSection && existingSection.items.length > 0) {
+        return state;
+      }
+
+      const sectionType: SectionType = isCommentSection(section)
+        ? 'comments'
+        : 'stories';
+
+      return {
+        sections: {
+          ...state.sections,
+          [section]: {
+            items: data,
+            sectionType,
+            nextPageUrl: null,
+            isLoading: false,
+            isLoadingMore: false,
+            hasMore,
+          },
         },
-      },
-    }));
+      };
+    });
   },
 
   setLoading: (section: string, isLoading: boolean) => {
@@ -68,7 +99,7 @@ export const useHNStore = create<HNStore>((set, get) => ({
       sections: {
         ...state.sections,
         [section]: {
-          ...(state.sections[section] || createEmptySectionData()),
+          ...(state.sections[section] || createEmptySectionData('stories')),
           isLoading,
         },
       },
@@ -80,7 +111,7 @@ export const useHNStore = create<HNStore>((set, get) => ({
       sections: {
         ...state.sections,
         [section]: {
-          ...(state.sections[section] || createEmptySectionData()),
+          ...(state.sections[section] || createEmptySectionData('stories')),
           isLoadingMore,
         },
       },
@@ -89,23 +120,25 @@ export const useHNStore = create<HNStore>((set, get) => ({
 
   updateSectionData: (
     section: string,
-    stories: Story[],
+    data: HNStory[] | HNComment[],
     nextPageUrl: string | null,
     hasMore: boolean,
     append: boolean = false,
   ) => {
     set((state) => {
-      const existingData = state.sections[section] || createEmptySectionData();
+      const existingData =
+        state.sections[section] || createEmptySectionData('stories');
 
-      const newStories = append
-        ? [...existingData.stories, ...stories]
-        : stories;
+      const newData: HNStory[] | HNComment[] = append
+        ? ([...existingData.items, ...data] as HNStory[] | HNComment[])
+        : data;
 
       const newState = {
         sections: {
           ...state.sections,
           [section]: {
-            stories: newStories,
+            ...existingData,
+            items: newData,
             nextPageUrl,
             isLoading: false,
             isLoadingMore: false,
@@ -121,10 +154,18 @@ export const useHNStore = create<HNStore>((set, get) => ({
   loadSection: async (section: string) => {
     const state = get();
 
-    // If section already has data, don't reload
-    if (state.sections[section]?.stories.length > 0) {
+    // If section already has data or is being loaded, don't reload
+    if (
+      state.sections[section]?.items.length > 0 ||
+      state.loadingSections.has(section)
+    ) {
       return;
     }
+
+    // Add to loading sections
+    set((prevState) => ({
+      loadingSections: new Set([...prevState.loadingSections, section]),
+    }));
 
     // Set loading state
     get().setLoading(section, true);
@@ -137,12 +178,32 @@ export const useHNStore = create<HNStore>((set, get) => ({
         return;
       }
 
-      const { stories, hasMore } = await fetchSection(section, false);
+      const result = await fetchSection(section, false);
 
-      get().updateSectionData(section, stories, null, hasMore, false);
+      // Type guard to safely extract data
+      let data: HNStory[] | HNComment[];
+      let hasMore: boolean;
+
+      if ('stories' in result) {
+        data = result.stories;
+        hasMore = result.hasMore;
+      } else {
+        data = result.comments;
+        hasMore = result.hasMore;
+      }
+
+      get().initializeSection(section, data, hasMore);
+      get().updateSectionData(section, data, null, hasMore, false);
     } catch (error) {
       console.error('Error loading section:', error);
       get().setLoading(section, false);
+    } finally {
+      // Remove from loading sections
+      set((prevState) => {
+        const newLoadingSections = new Set(prevState.loadingSections);
+        newLoadingSections.delete(section);
+        return { loadingSections: newLoadingSections };
+      });
     }
   },
 
@@ -170,22 +231,32 @@ export const useHNStore = create<HNStore>((set, get) => ({
         return;
       }
 
-      const { stories, hasMore } = await fetchSection(section, true);
+      const result = await fetchSection(section, true);
 
-      if (stories.length === 0) {
+      // Type guard to safely extract data
+      let data: HNStory[] | HNComment[];
+      let hasMore: boolean;
+
+      if ('stories' in result) {
+        data = result.stories;
+        hasMore = result.hasMore;
+      } else {
+        data = result.comments;
+        hasMore = result.hasMore;
+      }
+
+      if (data.length === 0) {
         get().updateSectionData(
           section,
-          [],
+          data,
           sectionData.nextPageUrl,
           false,
           false,
         );
       } else {
-        // The fetchSection function internally manages nextPageUrls,
-        // so we don't need to track it here - just preserve the existing one
         get().updateSectionData(
           section,
-          stories,
+          data,
           sectionData.nextPageUrl,
           hasMore,
           true,

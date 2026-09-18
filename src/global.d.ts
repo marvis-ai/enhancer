@@ -1,4 +1,4 @@
-interface Story {
+interface HNStory {
   id: string;
   rank: number;
   title: string;
@@ -11,6 +11,16 @@ interface Story {
   commentsUrl: string;
 }
 
+interface HNComment {
+  id: string;
+  username: string;
+  timestamp: string;
+  title: string;
+  titleUrl: string;
+  body: string;
+  timeAgo: string;
+}
+
 interface EnhancedSiteProps {
   title: string;
   domain: string;
@@ -18,9 +28,13 @@ interface EnhancedSiteProps {
 }
 
 interface Window {
-  __ENHANCER_AI_STORIES__?: Story[];
+  __ENHANCER_AI_STORIES__?: HNStory[];
+  __ENHANCER_AI_COMMENTS__?: HNComment[];
   __ENHANCER_AI_FETCH_SECTION__?: (
     section: string,
     isNextPage?: boolean,
-  ) => Promise<{ stories: Story[]; hasMore: boolean }>;
+  ) => Promise<
+    | { stories: Story[]; hasMore: boolean }
+    | { comments: HNComment[]; hasMore: boolean }
+  >;
 }

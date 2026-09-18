@@ -3,14 +3,13 @@ import { LoaderPinwheelIcon } from 'lucide-react';
 
 import { useHNStore } from '@/features/hacker-news/store/hn';
 
-import { StoryCard } from '@/features/hacker-news/story/card';
 import { CommentCard } from '@/features/hacker-news/comment/card';
 
-interface StoryListProps {
+interface CommentListProps {
   currentSection: string;
 }
 
-export const StoryList = ({ currentSection }: StoryListProps) => {
+export const CommentList = ({ currentSection }: CommentListProps) => {
   const { sections, loadMoreStories } = useHNStore();
   const observerRef = useRef<IntersectionObserver | null>(null);
   const loadMoreRef = useRef<HTMLDivElement>(null);
@@ -18,14 +17,14 @@ export const StoryList = ({ currentSection }: StoryListProps) => {
 
   const sectionData = sections[currentSection] || {
     items: [],
-    sectionType: 'stories' as const,
+    sectionType: 'comments' as const,
     isLoading: false,
     isLoadingMore: false,
     hasMore: false,
     nextPageUrl: null,
   };
 
-  const { items, sectionType, isLoading, isLoadingMore, hasMore } = sectionData;
+  const { items, isLoading, isLoadingMore, hasMore } = sectionData;
 
   const handleLoadMore = useCallback(async () => {
     if (isLoading || isLoadingMore || !hasMore) return;
@@ -80,7 +79,7 @@ export const StoryList = ({ currentSection }: StoryListProps) => {
       <div className='flex items-center justify-center py-12'>
         <div className='flex items-center gap-2 text-zinc-500'>
           <LoaderPinwheelIcon className='w-5 h-5 animate-spin' />
-          <span>Loading...</span>
+          <span>Loading comments...</span>
         </div>
       </div>
     );
@@ -88,27 +87,18 @@ export const StoryList = ({ currentSection }: StoryListProps) => {
 
   if (items.length === 0) {
     return (
-      <div className='text-center py-12 text-zinc-500'>
-        {sectionType === 'comments' ? 'No comments found' : 'No stories found'}
-      </div>
+      <div className='text-center py-12 text-zinc-500'>No comments found</div>
     );
   }
 
   return (
     <div className='space-y-3'>
-      {items.map((item) =>
-        sectionType === 'comments' ? (
-          <CommentCard
-            key={item.id}
-            comment={item as HNComment}
-          />
-        ) : (
-          <StoryCard
-            key={item.id}
-            story={item as HNStory}
-          />
-        ),
-      )}
+      {items.map((comment) => (
+        <CommentCard
+          key={comment.id}
+          comment={comment as HNComment}
+        />
+      ))}
 
       {hasMore && (
         <div
@@ -117,7 +107,7 @@ export const StoryList = ({ currentSection }: StoryListProps) => {
           {isLoadingMore && (
             <div className='flex items-center gap-2 text-zinc-500'>
               <LoaderPinwheelIcon className='w-5 h-5 animate-spin' />
-              <span>Loading more...</span>
+              <span>Loading more comments...</span>
             </div>
           )}
         </div>

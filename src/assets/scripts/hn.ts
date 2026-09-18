@@ -65,8 +65,8 @@ async function hideLoadingScreen() {
 }
 
 // Scrape stories from the original HN page or a fetched page
-function scrapeStories(doc: Document = document): Story[] {
-  const stories: Story[] = [];
+function scrapeStories(doc: Document = document): HNStory[] {
+  const stories: HNStory[] = [];
   const itemRows = doc.querySelectorAll('tr.athing');
 
   itemRows.forEach((row) => {
@@ -84,7 +84,6 @@ function scrapeStories(doc: Document = document): Story[] {
 
       const metaRow = row.nextElementSibling;
       if (!metaRow) {
-        console.warn('Story row missing metadata sibling:', id);
         return;
       }
 
@@ -141,6 +140,58 @@ function scrapeStories(doc: Document = document): Story[] {
   return stories;
 }
 
+// Scrape comments from the newcomments page
+function scrapeComments(doc: Document = document): HNComment[] {
+  const comments: HNComment[] = [];
+  const commentRows = doc.querySelectorAll('tr.athing');
+
+  commentRows.forEach((row) => {
+    try {
+      const id = row.getAttribute('id') || '';
+
+      // Extract username from .comhead .hnuser
+      const usernameElement = row.querySelector('.comhead .hnuser');
+      const username = usernameElement?.textContent?.trim() || '';
+
+      // Extract time from .comhead .age a
+      const timeElement = row.querySelector('.comhead .age a');
+      const timeAgo = timeElement?.textContent?.trim() || '';
+      const timestamp = timeAgo;
+
+      // Extract story title and URL from .comhead .navs .onstory a
+      const storyLinkElement = row.querySelector('.comhead .navs .onstory a');
+      const title = storyLinkElement?.textContent?.trim() || '';
+      let titleUrl = storyLinkElement?.getAttribute('href') || '';
+
+      // Make URL absolute if needed
+      if (titleUrl && !titleUrl.startsWith('http')) {
+        titleUrl = `https://news.ycombinator.com/${titleUrl}`;
+      }
+
+      // Extract comment body from .comment .commtext
+      const commentBodyElement = row.querySelector('.comment .commtext');
+      const body = commentBodyElement?.innerHTML || '';
+
+      // Only add if we have meaningful data
+      if (username && body) {
+        comments.push({
+          id,
+          username,
+          timestamp,
+          title,
+          titleUrl,
+          body,
+          timeAgo,
+        });
+      }
+    } catch (e) {
+      console.error('Error parsing comment row', e);
+    }
+  });
+
+  return comments;
+}
+
 // Parse the next page URL from the "More" link
 function getNextPageUrl(doc: Document): string | null {
   const moreLink = doc.querySelector('a.morelink[rel="next"]');
@@ -168,7 +219,9 @@ function getSectionUrl(section: string): string {
     home: '/',
     new: '/newest',
     past: '/front',
-    comments: '/newcomments',
+    newcomments: '/newcomments',
+    bestcomments: '/bestcomments',
+    best24comments: '/bestcomments?h=24',
     ask: '/ask',
     show: '/show',
     jobs: '/jobs',
@@ -179,27 +232,51 @@ function getSectionUrl(section: string): string {
 // Store the next page URL for each section
 const nextPageUrls: Record<string, string | null> = {};
 
-// Fetch and scrape stories from a specific URL
+// Track ongoing requests to avoid duplicates
+const ongoingRequests: Record<
+  string,
+  Promise<{ stories: HNStory[]; nextPageUrl: string | null }> | null
+> = {};
+
+// Fetch and scrape stories from a specific URL with deduplication
 async function fetchFromUrl(
   url: string,
-): Promise<{ stories: Story[]; nextPageUrl: string | null }> {
-  try {
-    const response = await fetch(url);
-    if (!response.ok) {
-      throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+): Promise<{ stories: HNStory[]; nextPageUrl: string | null }> {
+  // Check if there's already an ongoing request for this URL
+  if (ongoingRequests[url]) {
+    return ongoingRequests[url]!;
+  }
+
+  // Create the request and store it
+  const requestPromise = (async () => {
+    try {
+      const response = await fetch(url);
+      if (!response.ok) {
+        throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+      }
+      const html = await response.text();
+
+      const parser = new DOMParser();
+      const doc = parser.parseFromString(html, 'text/html');
+
+      const stories = scrapeStories(doc);
+      const nextPageUrl = getNextPageUrl(doc);
+
+      return { stories, nextPageUrl };
+    } catch (e) {
+      console.error('Error fetching from URL:', e);
+      return { stories: [], nextPageUrl: null };
     }
-    const html = await response.text();
+  })();
 
-    const parser = new DOMParser();
-    const doc = parser.parseFromString(html, 'text/html');
+  ongoingRequests[url] = requestPromise;
 
-    const stories = scrapeStories(doc);
-    const nextPageUrl = getNextPageUrl(doc);
-
-    return { stories, nextPageUrl };
-  } catch (e) {
-    console.error('Error fetching from URL:', e);
-    return { stories: [], nextPageUrl: null };
+  try {
+    const result = await requestPromise;
+    return result;
+  } finally {
+    // Clean up the ongoing request reference
+    delete ongoingRequests[url];
   }
 }
 
@@ -207,7 +284,10 @@ async function fetchFromUrl(
 async function fetchSection(
   section: string,
   isNextPage: boolean = false,
-): Promise<{ stories: Story[]; hasMore: boolean }> {
+): Promise<
+  | { stories: HNStory[]; hasMore: boolean }
+  | { comments: HNComment[]; hasMore: boolean }
+> {
   try {
     let url: string;
 
@@ -216,14 +296,39 @@ async function fetchSection(
       url = nextPageUrls[section]!;
     } else {
       // First page of the section
-      const sectionPath = getSectionUrl(section);
-      url = `${window.location.origin}${sectionPath}`;
+      // For comments sections, use the current path to preserve the specific URL
+      if (
+        (section === 'newcomments' ||
+          section === 'bestcomments' ||
+          section === 'best24comments') &&
+        window.location.pathname.startsWith('/bestcomments')
+      ) {
+        url = window.location.pathname + window.location.search;
+      } else {
+        const sectionPath = getSectionUrl(section);
+        url = `${window.location.origin}${sectionPath}`;
+      }
     }
 
     const { stories, nextPageUrl } = await fetchFromUrl(url);
 
     // Store the next page URL for this section
     nextPageUrls[section] = nextPageUrl;
+
+    // For comments sections, parse as comments instead of stories
+    if (
+      section === 'newcomments' ||
+      section === 'bestcomments' ||
+      section === 'best24comments'
+    ) {
+      const parser = new DOMParser();
+      const doc = parser.parseFromString(
+        await (await fetch(url)).text(),
+        'text/html',
+      );
+      const comments = scrapeComments(doc);
+      return { comments, hasMore: nextPageUrl !== null };
+    }
 
     return { stories, hasMore: nextPageUrl !== null };
   } catch (e) {
@@ -237,7 +342,10 @@ interface EnhancerWindow extends Window {
   __ENHANCER_AI_FETCH_SECTION__?: (
     section: string,
     isNextPage?: boolean,
-  ) => Promise<{ stories: Story[]; hasMore: boolean }>;
+  ) => Promise<
+    | { stories: HNStory[]; hasMore: boolean }
+    | { comments: HNComment[]; hasMore: boolean }
+  >;
 }
 (window as EnhancerWindow).__ENHANCER_AI_FETCH_SECTION__ = fetchSection;
 
@@ -248,34 +356,53 @@ function init() {
   mount.id = 'enhancer-ai-root';
   document.body.appendChild(mount);
 
-  // Scrape stories and store them
-  const stories = scrapeStories();
-
-  // Extract and store the next page URL from the initial page
-  const nextPageUrl = getNextPageUrl(document);
-
   // Determine the current section from the URL
-  const path = window.location.pathname;
+  const path = window.location?.pathname || '';
+  const search = window.location?.search || '';
   let currentSection = 'home';
   if (path === '/newest') currentSection = 'new';
   else if (path === '/front') currentSection = 'past';
-  else if (path === '/newcomments') currentSection = 'comments';
+  else if (path === '/newcomments') currentSection = 'newcomments';
+  else if (path === '/bestcomments' && search.includes('h=24'))
+    currentSection = 'best24comments';
+  else if (path === '/bestcomments') currentSection = 'bestcomments';
   else if (path === '/ask') currentSection = 'ask';
   else if (path === '/show') currentSection = 'show';
   else if (path === '/jobs') currentSection = 'jobs';
 
+  // Scrape appropriate data based on section
+  let stories: HNStory[] = [];
+  let comments: HNComment[] = [];
+
+  if (
+    currentSection === 'newcomments' ||
+    currentSection === 'bestcomments' ||
+    currentSection === 'best24comments'
+  ) {
+    comments = scrapeComments();
+  } else {
+    stories = scrapeStories();
+  }
+
+  // Extract and store the next page URL from the initial page
+  const nextPageUrl = getNextPageUrl(document);
+
   // Store the next page URL for the current section
   nextPageUrls[currentSection] = nextPageUrl;
 
-  // Store stories in a global variable for the React app to access
+  // Store data in global variables for the React app to access
   window.__ENHANCER_AI_STORIES__ = stories;
+  window.__ENHANCER_AI_COMMENTS__ = comments;
 
   // Dispatch event to notify that data is ready
   // setTimeout ensures the UI script has attached its event listener
   setTimeout(() => {
     window.dispatchEvent(
       new CustomEvent('enhancer-ai-data-ready', {
-        detail: { stories, hasMore: nextPageUrl !== null },
+        detail:
+          currentSection === 'comments'
+            ? { stories: comments, hasMore: nextPageUrl !== null }
+            : { stories, hasMore: nextPageUrl !== null },
       }),
     );
     // Hide loading screen once data is ready
